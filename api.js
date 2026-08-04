@@ -1,0 +1,121 @@
+// const getStates = async () => {
+//   try {
+//     const response = await fetch("https://api.data.gov.in/resource/f17a1608-5f10-4610-bb50-a63c80d83974?api-key=579b464db66ec23bdd000001cdd3946e44ce4aad7209ff7b23ac571b&format=json&limit=1000&offset=0");
+
+//     const data = await response.json();
+//     console.log(data.records.length);
+  
+//   } catch (error) {
+//     console.log(error); 
+//   }
+// };
+
+// getStates();
+
+
+
+
+let map;
+let markers = {};
+let infoWindow;
+
+async function init() {
+    const [{ Map, InfoWindow }, { ControlPosition }] = await Promise.all([
+        google.maps.importLibrary('maps'),
+        google.maps.importLibrary('core'),
+    ]);
+
+    const center = { lat: 37.4161493, lng: -122.0812166 };
+    map = new Map(document.getElementById('map'), {
+        center,
+        zoom: 11,
+        mapTypeControl: false,
+        mapId: 'DEMO_MAP_ID',
+    });
+
+    const textInput = document.getElementById('text-input');
+    const textInputButton = document.getElementById('text-input-button');
+    const card = document.getElementById('text-input-card');
+    map.controls[ControlPosition.TOP_LEFT].push(card);
+
+    textInputButton.addEventListener('click', () => {
+        void findPlaces(textInput.value);
+    });
+
+    textInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            void findPlaces(textInput.value);
+        }
+    });
+
+    infoWindow = new InfoWindow();
+}
+
+async function findPlaces(query) {
+    const [{ Place }, { AdvancedMarkerElement }] = await Promise.all([
+        google.maps.importLibrary('places'),
+        google.maps.importLibrary('marker'),
+    ]);
+
+    const request = {
+        textQuery: query,
+        fields: ['displayName', 'location', 'businessStatus'],
+        includedType: '', // Restrict query to a specific type (leave blank for any).
+        useStrictTypeFiltering: true,
+        locationBias: map.getCenter(),
+        isOpenNow: true,
+        language: 'en-US',
+        maxResultCount: 8,
+        minRating: 1, // Specify a minimum rating.
+        region: 'us',
+    };
+
+    const { places } = await Place.searchByText(request);
+
+    if (places.length) {
+        const { LatLngBounds } = await google.maps.importLibrary('core');
+        const bounds = new LatLngBounds();
+
+        // First remove all existing markers.
+        for (const id in markers) {
+            markers[id].map = null;
+        }
+        markers = {};
+
+        // Loop through and get all the results.
+        places.forEach((place) => {
+            const marker = new AdvancedMarkerElement({
+                map,
+                position: place.location,
+                title: place.displayName,
+            });
+            markers[place.id] = marker;
+
+            marker.addListener('gmp-click', () => {
+                map.panTo(place.location);
+                updateInfoWindow(place.displayName, place.id, marker);
+            });
+
+            if (place.location != null) {
+                bounds.extend(place.location);
+            }
+        });
+
+        map.fitBounds(bounds);
+    } else {
+        console.log('No results');
+    }
+}
+
+// Helper function to create an info window.
+function updateInfoWindow(title, content, anchor) {
+    infoWindow.setContent(content);
+    infoWindow.setHeaderContent(title);
+    infoWindow.open({
+        map,
+        anchor,
+        shouldFocus: false,
+    });
+}
+
+void init();
