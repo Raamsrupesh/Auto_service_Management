@@ -17,11 +17,11 @@ const studentAvailabilitySchema = new mongoose.Schema({
         enum:['AVAILABLE', 'NOT AVAILABLE'],
         required:true,
     },    
-    location:{
-        type:String,
+    latitude:{
+        type:Number,
         required:true
     },
-    markedAt:{
+    longitude:{
         type:Number,
         required:true
     }

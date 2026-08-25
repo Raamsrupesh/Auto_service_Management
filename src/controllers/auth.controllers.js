@@ -8,7 +8,7 @@ import {Driver} from '../models/driver.model.js'
 
 const redis = new Redis();
 
-export async function register(req, res){
+export async function register(req, res, next){
     try {
         const {name, email, password} = req.body;
 
@@ -30,17 +30,15 @@ export async function register(req, res){
         return res.status(201).json({success:true, msg : "✅ Sent OTP Successfully!", success:true});
         
     } catch (error) {
-        console.error('An error occurred:', error);
-        return res.status(500).json({
-            msg: 'Internal server error',
-            success: false,
-        });
-        process.exit(1);
+        error.status_code = 500;
+        error.msg = 'Internal server error';
+        error.function_name = 'register';
+        return next(error);
    }
 
 }
 
-export async function login(req, res){
+export async function login(req, res, next){
     try {
         const {email, password} = req.body;
 
@@ -63,16 +61,14 @@ export async function login(req, res){
         }
 
     } catch (error) {
-        console.error('An error occurred:', error);
-        return res.status(500).json({
-            msg: 'Internal server error',
-            success: false,
-        });
-        process.exit(1);
+        error.status_code = 500;
+        error.msg = 'Internal server error';
+        error.function_name = 'login';
+        return next(error);
     }
 }
 
-export async function forgotPassword(req, res) {
+export async function forgotPassword(req, res, next) {
     try {
         
         const {email} = req.body;
@@ -86,17 +82,14 @@ export async function forgotPassword(req, res) {
         }
         return res.status(400).json({msg :`No such email exists!!`});
     } catch (error) {
-        console.error('An error occurred:', error);
-        return res.status(500).json({
-            msg: 'Internal server error',
-            function:'forgotPassword',
-            success: false,
-        });
-        process.exit(1);
+        error.status_code = 500;
+        error.msg = 'Internal server error';
+        error.function_name = 'forgotPassword';
+        return next(error);
     }
 }
 
-export async function forgotPasswordOTPCheck(req, res) {
+export async function forgotPasswordOTPCheck(req, res, next) {
     try {
         const {email, act_otp} = req.body;
 
@@ -104,17 +97,14 @@ export async function forgotPasswordOTPCheck(req, res) {
         if(act_otp === otp) return res.status(200).json({msg : "Successfully done it!!"});
         return res.status(400).json({msg : "OTP is incorrect!!"});
     } catch (error) {
-        console.error('An error occurred:', error);
-        return res.status(500).json({
-            msg: 'Internal server error',
-            function:'forgotPasswordOTPCheck',
-            success: false,
-        });
-        process.exit(1);
+        error.status_code = 500;
+        error.msg = 'Internal server error';
+        error.function_name = 'forgotPasswordOTPCheck';
+        return next(error);
     }
 }
 
-export async function refreshToken(req, res) {
+export async function refreshToken(req, res, next) {
     try {
         const refresh_token = req.cookie.refreshToken;
         if(!refresh_token) return res.status(400).json({msg : "No refresh token exists!!"});
@@ -128,18 +118,14 @@ export async function refreshToken(req, res) {
         const accessToken = await jwt.sign(payload, process.env.JWT_SECRET, {expiresIn: '15m'});
         return res.status(200).json({msg : "Access token generated!!", token:accessToken});
     } catch (error) {
-        // next(error);
-        console.error('An error occurred:', error);
-        return res.status(500).json({
-            msg: 'Internal server error',
-            function:'refreshToken',
-            success: false,
-        });
-        process.exit(1);
+        error.status_code = 500;
+        error.msg = 'Internal server error';
+        error.function_name = 'refreshToken';
+        return next(error);
     }
 }
 
-export async function resetPasswordOTPCheck(req, res) {
+export async function resetPasswordOTPCheck(req, res, next) {
     try {
         const {email, act_otp, new_password} = req.body;
         if(!email || !otp) return res.status(400).json({msg : "Every field must be filled!!"});
@@ -153,17 +139,14 @@ export async function resetPasswordOTPCheck(req, res) {
         }
         return res.status(400).json({msg : "OTP is incorrect!!"});
     } catch (error) {
-        console.error('An error occurred:', error);
-        return res.status(500).json({
-            msg: 'Internal server error',
-            function:'resetPasswordOTPCheck',
-            success: false,
-        });
-        process.exit(1);
+        error.status_code = 500;
+        error.msg = 'Internal server error';
+        error.function_name = 'resetPasswordOTPCheck';
+        return next(error);
     }
 }
 
-export async function verifyEmail(req, res) {
+export async function verifyEmail(req, res, next) {
     try {
         const {email, act_otp} = req.body;
         const otp = await redis.get(email);
@@ -176,12 +159,99 @@ export async function verifyEmail(req, res) {
         }
         return res.status(400).json({msg : "OTP is incorrect!!"});
     } catch (error) {
-        console.error('An error occurred:', error);
-        return res.status(500).json({
-            msg: 'Internal server error',
-            function:'verifyEmail',
-            success: false,
-        });
-        process.exit(1);
+        error.status_code = 500;
+        error.msg = 'Internal server error';
+        error.function_name = 'verifyEmail';
+        return next(error);
+    }
+}
+
+export async function uploadImage(req, res, next) {
+    try {
+        if(!req.file) return res.status(500).json({msg : "No file uploaded!!"});
+
+        return res.status(200).json({msg:"Image uploded successfully!!", imageURL:req.file.path});
+    } catch (error) {
+        error.status_code = 500;
+        error.msg = 'Image upload error';
+        error.function_name = 'uploadImage';
+        return next(error);
+    }
+}
+
+export async function getMe(req, res, next){
+    try {
+        const id = req.id;
+        const act_user = await User.findById(id);
+        
+        if(!act_user) return res.status(400).json({msg:"No user exists!"});
+        
+        if(act_user.role === "Student"){
+            const student = await Student.findOne({userId:id});
+            return res.status(200).json({msg : {user:act_user, student}});
+        }
+        else if(act_user.role === "AutoDriver"){
+            const driver = await Driver.findOne({userId:id});
+            return res.status(200).json({msg : {user:act_user, driver}});
+        }
+        else if(act_user.role !== "ADMIN"){
+            return res.status(200).json({msg : {user:act_user}});
+        }
+        
+    } catch (error) {
+        error.status_code = 500;
+        error.msg = 'Internal server error';
+        error.function_name = 'getMe';
+        return next(error);
+    }
+}
+
+export async function changePassword(req, res, next) {
+    try {
+        const {email, old_password, new_password} = req.body;
+        const id = req.id;
+
+        const act_user = await User.findById(id);
+
+        if(!act_user) return res.status(400).json({msg : "NO User exists!"});
+
+        if(act_user.email !== email) return res.status(400).json({msg : "Incorrect Email!!"});
+        const isCrtpswd = await argon2.verify(act_user.password, old_password);
+
+        if(isCrtpswd){
+            const encryptedPswd = await argon2.hash(new_password);
+            act_user.password=encryptedPswd;
+            act_user.save();
+            return res.status(200).json({msg : "Successfully Updated the password!!"});
+        }
+
+        return res.status(400).json({msg : "Password is incorrect!"});
+        
+    } catch (error) {
+        error.status_code = 500;
+        error.msg = 'Internal server error';
+        error.function_name = 'changePassword';
+        return next(error);
+    }
+}
+
+export async function logOut(req, res, next) {
+    try {
+        const {refreshToken} = req.body;
+        const id = req.id;
+        const act_user = await User.findById(id);
+        
+        if(!act_user) return res.status(400).json({msg : "No User Exists!!"});
+        
+        act_user.refreshtoken = null;
+        act_user.save();
+        
+        return res.status(200).json({msg : "Successfully Logged OUT!"});
+        
+    } catch (error) {
+        error.status_code = 500;
+        error.msg = 'Internal server error';
+        error.function_name = 'logOut';
+        return next(error);
     }
 }

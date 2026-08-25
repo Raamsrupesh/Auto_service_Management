@@ -16,19 +16,26 @@ const driverAvailabilitySchema = new mongoose.Schema({
         type:String,
         enum:['AVAILABLE', 'BUSY', 'OFFLINE'],
         required:true,
+        default:"AVAILABLE"
     },    
-    currentLocation:{
-        type:String,
-        required:true
-    },
     vehicleID:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Vehicles",
         required:true,
         unique:true
     },
-    markedAt:{
-        type:Number,
+    
+        longitude:{
+            type:Number,
+            required:true
+        },
+        latitude:{
+            type:Number,
+            required:true
+        },
+    
+    destinations:{
+        type:Array,
         required:true
     }
 },{timestamps:true});

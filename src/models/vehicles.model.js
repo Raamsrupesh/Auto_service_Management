@@ -31,11 +31,16 @@ const vehiclesSchema = new mongoose.Schema({
     status:{
         type:Boolean,
         required:true,
-    },    
-    currentLocation:{
+        default:true
+    }, 
+    uploadedImage:{
         type:String,
         required:true
-    },
+    }   
+    // currentLocation:{
+    //     type:String,
+    //     required:true
+    // },
 },{timestamps:true});
 
 export const Vehicles = mongoose.model("Vehicles", vehiclesSchema);

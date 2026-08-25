@@ -48,10 +48,13 @@ const driverSchema = new mongoose.Schema({
         type:Number,
         required:true
     },
+    individualRating:{
+        type:Array,
+        required:true
+    },
     collegeIDs:{
         type: [mongoose.Schema.Types.ObjectId],
         ref:"collegeLocation",
-        required:true
     }
 },{timestamps:true});
 
