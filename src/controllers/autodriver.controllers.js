@@ -5,6 +5,7 @@ import { Student } from '../models/student.model.js';
 import { driverAvailability } from '../models/driveravailability.model.js';
 import {Allocations} from '../models/allocations.model.js';
 import { studentAvailability } from '../models/studentavailability.model.js';
+import { collegeLocation } from '../models/locations.model.js';
 
 export async function getAuto(req, res, next) {
     try {
@@ -86,9 +87,18 @@ export async function driverMarkingArrived(req, res, next) {
     try {
         const id = req.id;
         const vehicleID = req.vehicleID;
-        const {long, lat, destinations} = req.body; //Assuming that we're getting the details from req.body .
-        await driverAvailability.insertOne({driverId:id, vehicleID, longitude:long, latitude:lat, destinations});
-        return res.status(201).json({msg : "Succesfully inserted!!"});
+        const {college_id, long, lat, destinations} = req.body; //Assuming that we're getting the details from req.body .
+        const driver = await Driver.findOne({_id:id, collegeIDs:college_id}); 
+        const college = await collegeLocation.findById(college_id);
+        if(college.latitude-0.05 <= lat && college.latitude+0.05 >= lat && college.longitude-0.05 <= long && college.longitude+0.05 >= long){
+            if(!driver.licenseNumber){
+                return res.status(403).json({msg : "Sorry, without licence number, no auto driver could proceed further!!"})
+            }
+            await driverAvailability.insertOne({driverId:id, vehicleID, longitude:long, latitude:lat, destinations});
+            await Allocations.insertOne({vehicleId: vehicleID, driverId:id, })
+            return res.status(201).json({msg : "Succesfully inserted!!"});
+        }
+        return res.status(401).json({msg : "No location is matching!!"});
 
     } catch (error) {
         error.status_code = 500;
@@ -184,6 +194,25 @@ export async function endTripForDriver(req, res, next) {
         error.status_code = 500;
         error.msg = 'Internal server error';
         error.function_name = 'startTripForDriver';
+        return next(error);
+    }
+}
+
+export async function endAllocationsForThisAuto(req, res, next) {
+    try {
+        const id = req.id;
+        const vehicleID = req.vehicleID;
+        const vehicle = await Vehicles.findById(vehicleID);
+        const allocations = await Allocations.findOne({driverId:id});
+        if(allocations.studentIds.length >= vehicle.availableSeats * vehicle.seatCapacity){
+            allocations.allocationStatus = "LOCKED";
+            allocations.save();
+            return res.status(200).json({msg : "Successfully allocations are full!!"});
+        }
+    } catch (error) {
+        error.status_code = 500;
+        error.msg = 'Internal server error';
+        error.function_name = 'endAllocationsForThisAuto';
         return next(error);
     }
 }

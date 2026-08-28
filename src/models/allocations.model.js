@@ -20,7 +20,7 @@ const allocationsSchema = new mongoose.Schema({
         unique:true
     },
     studentIds:{
-        type:[mongoose.Schema.Types.ObjectId],
+        type: [mongoose.Schema.Types.ObjectId],
         ref:"Student",
         required:true,
         validate:{

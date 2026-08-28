@@ -24,16 +24,14 @@ const driverAvailabilitySchema = new mongoose.Schema({
         required:true,
         unique:true
     },
-    
-        longitude:{
-            type:Number,
-            required:true
-        },
-        latitude:{
-            type:Number,
-            required:true
-        },
-    
+    longitude:{
+        type:Number,
+        required:true
+    },
+    latitude:{
+        type:Number,
+        required:true
+    },
     destinations:{
         type:Array,
         required:true

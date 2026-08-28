@@ -71,22 +71,21 @@ export async function studentBookingAuto(req, res, next){
                         /**
                          * Give the auto's where the students are not fully filled.
                          */
-                        const vehicle_det = await Vehicles.find(
-                            {driverID: driversAva.driverId}
-                        )
-                        const curr_allocations = await Allocations.find(
-                            {driverId:driversAva.driverId},
-                            {allocationStatus: "OPEN"}
-                        ).sort({})
+                        // const vehicle_det = await Vehicles.find(
+                        //     {driverID: driversAva.driverId}
+                        // )
+                        // const curr_allocations = await Allocations.find(
+                        //     {driverId:driversAva.driverId},
+                        //     {allocationStatus: "OPEN"}
+                        // ).sort({})
                         
                         /**
                          * I am stopping this for now because The next and some of the above processes Should be due with 'aggregation pipeline' framework
                          */
 
                         // SOCKETIO implementation -> MAP mein 2 dikhana hai
-
-
                     }
+                    return res.status(401).json({msg :"Student's destinations aren't given!!"});
                 }
             }
         }
@@ -195,7 +194,6 @@ export async function delete_student_booking(req, res, next){
     }
 }
 
-
 export async function get_student_trips_details (req, res, next){
   try {
     const {id} = req; 
@@ -260,8 +258,7 @@ export async function get_student_trip_details (req, res, next) {
         error.function_name = 'get_student_trip_details';
         return next(error);
     }
-};
-
+}
 
 export async function drivers_list(req, res, next){
     try {
@@ -294,7 +291,7 @@ export async function complaint_on_a_driver(req, res, next){
 export async function vehicles_list_for_complaint(req, res, next){
     try {
         const {id} = req;
-        give_list_for_complaint('VEHICLE', id);
+        return res.status(200).json({data:give_list_for_complaint('VEHICLE', id)});
     } catch (error) {
         error.status_code = 500;
         error.msg = 'Internal server error';
@@ -321,7 +318,6 @@ export async function complaint_on_a_vehicle(req, res, next){
 /**
  * OPTIONAL ROUTES: co-passengers_list_for_complaint, complaint_on_a_co-passenger
  */
-
 
 export async function rating_a_driver(req, res, next){
     try {

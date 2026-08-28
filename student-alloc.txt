@@ -1,0 +1,34 @@
+Student
+   ↓
+Is student geographically eligible?
+   ↓
+Is subscription active?
+   ↓
+Has student already been processed in last 24h?
+   ↓
+Does student have a destination?
+   ↓
+Find AVAILABLE drivers
+   ↓
+Find vehicles + seat capacity
+   ↓
+Find OPEN allocations
+   ↓
+Keep only vehicles having:
+   - matching destination
+   - at least 1 free seat
+   ↓
+Calculate:
+   occupancy = allocated passengers / vehicle seats
+   freeSeats = seats - allocated passengers
+   monthlyTrips = driver's completed trips this month
+   ↓
+Rank vehicles
+   1. Destination match
+   2. Highest occupancy
+   3. Fewest monthly trips
+   4. More free seats / other tie breakers
+   ↓
+Allocate student
+   ↓
+If vehicle becomes full → finalize allocation → Trip workflow
